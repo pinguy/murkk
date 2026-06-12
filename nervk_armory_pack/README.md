@@ -1,77 +1,198 @@
-# .nervk armory
+# .nervk armory v2
 
-Endless `.kkrieger`-spirit Linux FPS variant.
+Tiny native-Linux FPS experiment in the spirit of `.kkrieger`: one C file, no asset files, no engine, procedural everything.
 
-Built from the endless `.nervk` branch and expanded with:
+This branch is now built around `nervk2.c` as the base, with the useful missing pieces from `nervk_armory(5).c` folded back in rather than replacing the newer systems.
 
-- weapon switching on `1`, `2`, `3`
-  - `1` pistol: accurate hitscan, bullet ammo
-  - `2` shotgun: nine pellet spread, shell ammo, heavy kick
-  - `3` rocket launcher: glowing physical rocket, smoke trail, radius damage, self-damage
-- four pickup classes
-  - red health
-  - yellow bullets
-  - orange shells
-  - green rockets
-- three creature kinds
-  - cable crawler: fast melee insect
-  - bruiser: tall slow hard hitter
-  - spitter: squat green ranged gland
-- second procedural tileset
-  - odd floors use wet black ribbed walls, gridded floor plates, oily duct ceilings
-  - even floors use the original brick/floor/bolted-metal set
-- endless descent still active: touching the green exit derives the next deterministic seed, carries resources forward, and increments the floor counter.
+## What it is
+
+`.nervk armory v2` is a compact endless corridor shooter:
+
+- procedural levels carved from a deterministic seed
+- procedural wall, floor, ceiling and glow textures
+- normal-mapped GL 2.1 lighting and fog
+- synthesized weapon and monster audio
+- generated creature silhouettes
+- generated weapon models
+- HUD, pickups, particles, projectiles and floor transitions
+- no external assets
+
+The funny part: the current tiny build has been measured at about **28.2 KB**, while still having enough moving parts to feel like a real little horror shooter rather than just a size stunt.
+
+## Current feature set
+
+### Weapons
+
+Weapon switching is on `1`, `2`, `3`, plus mouse wheel.
+
+- `1` pistol
+  - accurate hitscan
+  - uses bullet ammo
+  - fast, reliable fallback weapon
+- `2` shotgun
+  - nine-pellet spread
+  - uses shell ammo
+  - heavy kick
+  - improved generated model with twin barrels, receiver, pump, stock and double muzzle flash
+- `3` rocket launcher
+  - physical glowing rocket projectile
+  - smoke trail
+  - radius damage
+  - self-damage if you fire like a hero in a cupboard
+
+The weapon sounds are intentionally back near the older armory-style synth sounds after the over-beefed pass made them worse.
+
+### Pickups
+
+Four pickup classes:
+
+- red health
+- amber/yellow bullets
+- orange/brass shells
+- cyan rockets
+
+The pickup and HUD colour language follows the newer `nervk2.c` look, with shells added into the existing palette instead of recolouring the whole thing.
+
+### Creature roster
+
+The roster now keeps the newer `nervk2.c` enemies and the useful armory creatures as distinct kinds, so nothing gets silently overwritten.
+
+- `CRAWLER`
+  - basic fast melee pressure
+- `SKITTER`
+  - small, fast panic enemy
+- `BRUTE`
+  - large heavy tank / exit guardian
+- `BRUISER`
+  - renamed armory heavy variant, kept separate from `BRUTE`
+- `SPITTER`
+  - newer projectile spitter
+  - ranged acid/gob pressure
+- `ARMORY_SPITTER`
+  - renamed green armory spitter/gland creature
+  - does **not** fire a projectile
+  - closes to bile/light range, rears up, lights the ground/player green, then applies direct damage
+  - nasty when it has you boxed into a corner
+
+That last one is important: the green armory spitter is not just another ranged shooter. It is a close-range controller / corner-punisher. The windup gives you a readable “move now” moment, but if you are trapped it becomes a proper bastard.
+
+### Tilesets and floors
+
+There are now three procedural tileset families:
+
+- `WORKS`
+  - original brick walls
+  - grimy floor slabs
+  - bolted metal ceilings
+- `HIVE`
+  - chitin plates
+  - membrane floors
+  - ribbed organic ceilings
+- `VESSEL`
+  - armory pressure-vessel look
+  - wet black ribbed walls
+  - gridded floor plates
+  - oily duct ceilings
+
+Normal floors use one coherent tileset family.
+
+Every fourth floor is a `MIXED` floor. On those floors the wall, floor and ceiling each choose a deterministic random tileset independently, so you can get combinations like brick walls, hive floor and vessel ceiling without adding asset bulk.
+
+### Endless descent
+
+Touching the green exit:
+
+- derives the next deterministic seed
+- increments the floor counter
+- carries resources forward with small bonuses
+- changes the floor identity / tileset cycle
+- keeps the pressure climbing through spawn weighting
 
 ## Controls
 
 ```text
-WASD      move
-Mouse     look
-LMB       fire
-1 / 2 / 3 pistol / shotgun / rocket launcher
-ESC       quit
+WASD          move
+Mouse         look
+LMB           fire
+1             pistol
+2             shotgun
+3             rocket launcher
+Mouse wheel   cycle weapon
+ESC           quit
 ```
 
 ## Build
 
-Normal stripped ELF:
+Build the normal stripped ELF:
 
 ```sh
 gcc -Os -Wall \
   -fno-asynchronous-unwind-tables -fno-unwind-tables \
   -ffunction-sections -fdata-sections \
-  nervk_armory.c -o nervk_armory \
+  nervk2_armory_v2.c -o nervk2_armory_v2 \
   -Wl,--gc-sections -lSDL2 -lGL -lm
-strip -s nervk_armory
+strip -s nervk2_armory_v2
 ```
 
-Tiny runner path:
+Run it:
 
 ```sh
-./build_nervk_armory_tiny.sh
+./nervk2_armory_v2
 ```
 
-The build script uses `strip`, then `sstrip` if installed, otherwise the included Python `tiny_tools/sstrip64.py`, then appends an xz stream to a tiny shell runner.
+Override the deterministic seed:
 
-## Measured in this container
+```sh
+./nervk2_armory_v2 --seed 12345
+```
+
+## Tiny build notes
+
+The project still follows the original 96 KB discipline: system libraries such as SDL2, OpenGL and libc are not counted, just like `.kkrieger` leaned on the platform graphics stack.
+
+The current tiny build has been measured at roughly:
 
 ```text
-strip:     60,128 bytes
-sstrip:    57,972 bytes
-xz stream: 23,524 bytes
-runner:    23,636 bytes
+runner: 28.2 KB
 ```
 
-So the expanded armory build is still comfortably under the original 96 KB discipline, but it no longer fits under 20 KB with the shell/xz runner. The earlier smaller build did; the rocket/projectile/enemy/tileset pass spent the headroom.
+That is after adding:
+
+- three weapons
+- four pickup types
+- six creature kinds
+- three procedural tileset families
+- mixed-material floors
+- projectiles
+- particles
+- synthesized audio
+- HUD and generated weapon models
+
+So the headroom is still absurdly good. There is room for this to become more of a real game without betraying the original “tiny procedural bastard” idea.
 
 ## Verification
 
-Smoke-tested under Xvfb + llvmpipe:
+The latest merge was syntax/type checked with strict C flags against local SDL/OpenGL stubs:
 
-```text
-[nervk] SMOKE OK
+```sh
+gcc -std=c99 -Wall -Wextra -Werror -fsyntax-only nervk2_armory_v2.c
 ```
 
-The smoke path synthesizes textures, carves a level, renders title/game frames, and exits 0.
+A full native SDL2/OpenGL link needs SDL2 development headers and GL libraries installed on the target Linux system.
 
-Still no asset files. The new weapons, pickups, creature silhouettes, projectile trail, explosion, audio voices, and second tileset are all generated in code.
+## Design notes
+
+The project started as a size experiment: how small can a native Linux FPS be if everything is generated in code?
+
+The answer is that the constraint accidentally creates a proper design language. Because there are no asset files to lean on, every feature has to be a compact system:
+
+- textures are algorithms
+- levels are seeded rules
+- enemies are behaviour archetypes
+- audio is small synth events
+- weapon feel is timing, kick, light and hit logic
+- atmosphere is material, fog and dynamic light
+
+The result is not just “small Doom clone”. It is a tiny procedural horror shoebox where each extra kilobyte has to earn its keep.
+
+Still no asset files. The weapons, pickups, creature silhouettes, bile-light attack, projectile trail, explosion, audio voices, floor materials and HUD are all generated in code.
