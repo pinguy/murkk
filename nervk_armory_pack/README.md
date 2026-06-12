@@ -1,4 +1,4 @@
-# .nervk armory v2
+# .nervk armor
 
 Tiny native-Linux FPS experiment in the spirit of `.kkrieger`: one C file, no asset files, no engine, procedural everything.
 
@@ -6,7 +6,7 @@ This branch is now built around `nervk2.c` as the base, with the useful missing 
 
 ## What it is
 
-`.nervk armory v2` is a compact endless corridor shooter:
+`.nervk armory` is a compact endless corridor shooter:
 
 - procedural levels carved from a deterministic seed
 - procedural wall, floor, ceiling and glow textures
@@ -126,24 +126,19 @@ ESC           quit
 Build the normal stripped ELF:
 
 ```sh
-gcc -Os -Wall \
-  -fno-asynchronous-unwind-tables -fno-unwind-tables \
-  -ffunction-sections -fdata-sections \
-  nervk2_armory_v2.c -o nervk2_armory_v2 \
-  -Wl,--gc-sections -lSDL2 -lGL -lm
-strip -s nervk2_armory_v2
+bash build_nervk_armory_tiny.sh
 ```
 
 Run it:
 
 ```sh
-./nervk2_armory_v2
+./nervk
 ```
 
 Override the deterministic seed:
 
 ```sh
-./nervk2_armory_v2 --seed 12345
+./nervk --seed 12345
 ```
 
 ## Tiny build notes
@@ -175,7 +170,7 @@ So the headroom is still absurdly good. There is room for this to become more of
 The latest merge was syntax/type checked with strict C flags against local SDL/OpenGL stubs:
 
 ```sh
-gcc -std=c99 -Wall -Wextra -Werror -fsyntax-only nervk2_armory_v2.c
+gcc -std=c99 -Wall -Wextra -Werror -fsyntax-only nervk_armory.c
 ```
 
 A full native SDL2/OpenGL link needs SDL2 development headers and GL libraries installed on the target Linux system.
