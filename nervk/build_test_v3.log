@@ -1,0 +1,25 @@
+[build] headers:   bundled compat
+[build] compiling nervk_armory_dlopen.c
+[build] strip:     60240 bytes
+[build] sstrip:    58376 bytes
+[build] xz try:    lc=0 pb=0 => 26504 bytes
+[build] xz try:    lc=0 pb=1 => 26600 bytes
+[build] xz try:    lc=0 pb=2 => 26676 bytes
+[build] xz try:    lc=1 pb=0 => 26556 bytes
+[build] xz try:    lc=1 pb=1 => 26648 bytes
+[build] xz try:    lc=1 pb=2 => 26720 bytes
+[build] xz try:    lc=2 pb=0 => 26552 bytes
+[build] xz try:    lc=2 pb=1 => 26636 bytes
+[build] xz try:    lc=2 pb=2 => 26704 bytes
+[build] xz try:    lc=3 pb=0 => 26552 bytes
+[build] xz try:    lc=3 pb=1 => 26608 bytes
+[build] xz try:    lc=3 pb=2 => 26696 bytes
+[build] xz try:    lc=4 pb=0 => 26548 bytes
+[build] xz try:    lc=4 pb=1 => 26612 bytes
+[build] xz try:    lc=4 pb=2 => 26688 bytes
+[build] xz best:   26504 bytes (lc=0 pb=0)
+[build] runner:    26593 bytes (25 KiB)
+[build] budget:    UNDER 96 KiB
+[build] budget:    UNDER 32 KiB
+[build] DT_NEEDED:
+ 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]

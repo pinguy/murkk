@@ -1,0 +1,10 @@
+[build] compiling nervk_armory_dlopen.c
+[build] strip:     60240 bytes
+[build] sstrip:    58376 bytes
+[build] xz stream: 26504 bytes
+[build] runner:    26590 bytes (25 KB)
+[build] UNDER 96 KB
+[build] over 20,000 bytes
+[build] over 20 KiB
+[build] DT_NEEDED:
+ 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]

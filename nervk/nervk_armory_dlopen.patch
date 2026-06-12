@@ -1,0 +1,173 @@
+--- nervk_armory.c	2026-06-12 17:19:28.000000000 +0000
++++ nervk_armory_dlopen.c	2026-06-12 19:04:40.643305782 +0000
+@@ -14,14 +14,89 @@
+ 
+ #include <SDL2/SDL.h>
+ #include <SDL2/SDL_opengl.h>
++#include <dlfcn.h>
+ #include <math.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+ 
++/* -------------------------------------------------------------- libm loader
++ * Same trick for the handful of libm calls so the binary only NEEDEDs libc. */
++#define MATHFUNCS \
++  MF(floorf) MF(sinf) MF(cosf) MF(sqrtf) MF(expf) MF(tanhf) MF(atan2f) MF(fabsf) MF(tanf)
++#define MF(n) static typeof(n)* p_##n;
++MATHFUNCS
++#undef MF
++static void load_math(void){
++  void*h=dlopen("libm.so.6",1);
++#define MF(n) p_##n=(typeof(p_##n))dlsym(h,#n);
++  MATHFUNCS
++#undef MF
++}
++#define floorf p_floorf
++#define sinf p_sinf
++#define cosf p_cosf
++#define sqrtf p_sqrtf
++#define expf p_expf
++#define tanhf p_tanhf
++#define atan2f p_atan2f
++#define fabsf p_fabsf
++#define tanf p_tanf
++
++/* --------------------------------------------------------------- SDL loader
++ * Dlopen SDL instead of carrying a DT_NEEDED + PLT/rela entry for every SDL call. */
++#define SDLFUNCS \
++  SF(SDL_setenv) \
++  SF(SDL_Init) \
++  SF(SDL_InitSubSystem) \
++  SF(SDL_GL_SetAttribute) \
++  SF(SDL_CreateWindow) \
++  SF(SDL_GL_CreateContext) \
++  SF(SDL_GetError) \
++  SF(SDL_GL_SetSwapInterval) \
++  SF(SDL_GetTicks) \
++  SF(SDL_OpenAudioDevice) \
++  SF(SDL_PauseAudioDevice) \
++  SF(SDL_PollEvent) \
++  SF(SDL_SetRelativeMouseMode) \
++  SF(SDL_GL_SwapWindow) \
++  SF(SDL_CloseAudioDevice) \
++  SF(SDL_GL_DeleteContext) \
++  SF(SDL_DestroyWindow) \
++  SF(SDL_Quit) \
++  SF(SDL_GL_GetProcAddress)
++
++#define SF(n) static typeof(n)* p_##n;
++SDLFUNCS
++#undef SF
++static void load_sdl(void){
++  void*h=dlopen("libSDL2-2.0.so.0",1);
++#define SF(n) p_##n=(typeof(p_##n))dlsym(h,#n);
++  SDLFUNCS
++#undef SF
++}
++#define SDL_setenv p_SDL_setenv
++#define SDL_Init p_SDL_Init
++#define SDL_InitSubSystem p_SDL_InitSubSystem
++#define SDL_GL_SetAttribute p_SDL_GL_SetAttribute
++#define SDL_CreateWindow p_SDL_CreateWindow
++#define SDL_GL_CreateContext p_SDL_GL_CreateContext
++#define SDL_GetError p_SDL_GetError
++#define SDL_GL_SetSwapInterval p_SDL_GL_SetSwapInterval
++#define SDL_GetTicks p_SDL_GetTicks
++#define SDL_OpenAudioDevice p_SDL_OpenAudioDevice
++#define SDL_PauseAudioDevice p_SDL_PauseAudioDevice
++#define SDL_PollEvent p_SDL_PollEvent
++#define SDL_SetRelativeMouseMode p_SDL_SetRelativeMouseMode
++#define SDL_GL_SwapWindow p_SDL_GL_SwapWindow
++#define SDL_CloseAudioDevice p_SDL_CloseAudioDevice
++#define SDL_GL_DeleteContext p_SDL_GL_DeleteContext
++#define SDL_DestroyWindow p_SDL_DestroyWindow
++#define SDL_Quit p_SDL_Quit
++#define SDL_GL_GetProcAddress p_SDL_GL_GetProcAddress
++
+ /* ---------------------------------------------------------------- GL loader
+- * Pull GL2 entry points through SDL_GL_GetProcAddress. Bulletproof across
+- * Mesa/NVIDIA without GL_GLEXT_PROTOTYPES link games. */
++ * Pull all GL entry points through SDL_GL_GetProcAddress/libGL dlsym. */
+ #define GLFUNCS \
+   GF(PFNGLCREATESHADERPROC,      glCreateShader)      \
+   GF(PFNGLSHADERSOURCEPROC,      glShaderSource)      \
+@@ -43,14 +118,67 @@
+   GF(PFNGLUNIFORMMATRIX3FVPROC,  glUniformMatrix3fv)  \
+   GF(PFNGLACTIVETEXTUREPROC,     glActiveTexture_)
+ 
++#define GLBASEFUNCS \
++  BF(glBegin) BF(glBindTexture) BF(glBlendFunc) BF(glClear) BF(glClearColor) \
++  BF(glColor3f) BF(glColor4f) BF(glDepthMask) BF(glDisable) BF(glDisableClientState) \
++  BF(glDrawArrays) BF(glEnable) BF(glEnableClientState) BF(glEnd) BF(glFrustum) \
++  BF(glGenTextures) BF(glGetString) BF(glLoadIdentity) BF(glMatrixMode) BF(glNormal3f) \
++  BF(glNormalPointer) BF(glOrtho) BF(glPixelStorei) BF(glPointSize) BF(glPopMatrix) \
++  BF(glPushMatrix) BF(glReadPixels) BF(glRotatef) BF(glTexCoord2f) BF(glTexCoordPointer) \
++  BF(glTexImage2D) BF(glTexParameteri) BF(glTranslatef) BF(glVertex2f) BF(glVertex3f) \
++  BF(glVertexPointer)
++
+ #define GF(t,n) static t n;
+ GLFUNCS
+ #undef GF
++#define BF(n) static typeof(n)* p_##n;
++GLBASEFUNCS
++#undef BF
++static void *glsym(const char*n){ return SDL_GL_GetProcAddress(n); }
+ static void load_gl(void){
+-#define GF(t,n) n = (t)SDL_GL_GetProcAddress(#n[strlen(#n)-1]=='_'?"glActiveTexture":#n);
++#define GF(t,n) n = (t)glsym(#n[strlen(#n)-1]=='_'?"glActiveTexture":#n);
+   GLFUNCS
+ #undef GF
+-}
++#define BF(n) p_##n = (typeof(p_##n))glsym(#n);
++  GLBASEFUNCS
++#undef BF
++}
++#define glBegin p_glBegin
++#define glBindTexture p_glBindTexture
++#define glBlendFunc p_glBlendFunc
++#define glClear p_glClear
++#define glClearColor p_glClearColor
++#define glColor3f p_glColor3f
++#define glColor4f p_glColor4f
++#define glDepthMask p_glDepthMask
++#define glDisable p_glDisable
++#define glDisableClientState p_glDisableClientState
++#define glDrawArrays p_glDrawArrays
++#define glEnable p_glEnable
++#define glEnableClientState p_glEnableClientState
++#define glEnd p_glEnd
++#define glFrustum p_glFrustum
++#define glGenTextures p_glGenTextures
++#define glGetString p_glGetString
++#define glLoadIdentity p_glLoadIdentity
++#define glMatrixMode p_glMatrixMode
++#define glNormal3f p_glNormal3f
++#define glNormalPointer p_glNormalPointer
++#define glOrtho p_glOrtho
++#define glPixelStorei p_glPixelStorei
++#define glPointSize p_glPointSize
++#define glPopMatrix p_glPopMatrix
++#define glPushMatrix p_glPushMatrix
++#define glReadPixels p_glReadPixels
++#define glRotatef p_glRotatef
++#define glTexCoord2f p_glTexCoord2f
++#define glTexCoordPointer p_glTexCoordPointer
++#define glTexImage2D p_glTexImage2D
++#define glTexParameteri p_glTexParameteri
++#define glTranslatef p_glTranslatef
++#define glVertex2f p_glVertex2f
++#define glVertex3f p_glVertex3f
++#define glVertexPointer p_glVertexPointer
+ 
+ /* ---------------------------------------------------------------- constants */
+ #define WINW 1280
+@@ -1600,6 +1728,8 @@
+     if(!strcmp(argv[i],"--smoke"))smoke=1;
+     else if(!strcmp(argv[i],"--seed")&&i+1<argc)gseed=(unsigned)strtoul(argv[++i],0,0);
+   }
++  load_math();
++  load_sdl();
+   if(smoke) SDL_setenv("SDL_AUDIODRIVER","dummy",1);
+ 
+   if(SDL_Init(SDL_INIT_VIDEO)<0){ fprintf(stderr,"SDL: %s\n",SDL_GetError()); return 1; }
