@@ -132,13 +132,13 @@ bash build_nervk_armory_tiny.sh
 Run it:
 
 ```sh
-./nervk
+./nervk_armory.xzrun
 ```
 
 Override the deterministic seed:
 
 ```sh
-./nervk --seed 12345
+./nervk_armory.xzrun --seed 12345
 ```
 
 ## Tiny build notes
