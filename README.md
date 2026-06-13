@@ -1,14 +1,10 @@
 # .murkk
 ---
-
-[![UI Preview](https://github.com/pinguy/murkk/blob/main/nervk/nervk_armory_shot_title.png?raw=true)](https://github.com/pinguy/murkk/blob/main/nervk/nervk_armory_shot_title.png?raw=true)
-
 [![UI Preview](https://github.com/pinguy/murkk/blob/main/nervk/nervk_armory_shot_shotgun.png?raw=true)](https://github.com/pinguy/murkk/blob/main/nervk/nervk_armory_shot_shotgun.png?raw=true)
 
 [![UI Preview](https://github.com/pinguy/murkk/blob/main/nervk/nervk_armory_shot_bile.png?raw=true)](https://github.com/pinguy/murkk/blob/main/nervk/nervk_armory_shot_bile.png?raw=true)
 
 [![UI Preview](https://github.com/pinguy/murkk/blob/main/nervk/nervk_armory_shot_combat.png?raw=true)](https://github.com/pinguy/murkk/blob/main/nervk/nervk_armory_shot_combat.png?raw=true)
-
 ---
 
 A 96K-spirit homage to **.kkrieger** (.theprodukkt, Breakpoint 2004). Native Linux,
